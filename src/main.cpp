@@ -123,6 +123,15 @@ int main() {
     shader.SetInt("material.diffuse", 0);
     shader.SetInt("material.specular", 1);
 
+    shader.SetFloat("material.shininess", 64.0f);
+    shader.SetVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+    shader.SetVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+    shader.SetVec3("light.specular", 1.0f, 1.0f, 1.0f);
+    shader.SetVec3("light.position", lightPos);
+
+    glm::vec3 lightColor = glm::vec3(1.0);
+    shader.SetVec3("lightColor", lightColor);
+
     Shader lightingShader("shaders/lightingVertexShader.glsl", "shaders/lightingFragmentShader.glsl");
     lightingShader.Use();
 
@@ -190,17 +199,7 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         shader.SetMat4("view", view);
         shader.SetMat4("model", model);
-
         shader.SetVec3("viewPos", camera.Position);
-        shader.SetVec3("lightPos", lightPos);
-        shader.SetFloat("material.shininess", 64.0f);
-        shader.SetVec3("light.ambient", 0.1f, 0.1f, 0.1f);
-        shader.SetVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-        shader.SetVec3("light.specular", 1.0f, 1.0f, 1.0f);
-        shader.SetVec3("light.position", lightPos);
-
-        glm::vec3 lightColor = glm::vec3(1.0);
-        shader.SetVec3("lightColor", lightColor);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textures[0]);
