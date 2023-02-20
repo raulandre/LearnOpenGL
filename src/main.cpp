@@ -124,7 +124,7 @@ int main() {
     shader.SetInt("material.specular", 1);
 
     shader.SetFloat("material.shininess", 64.0f);
-    shader.SetVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+    shader.SetVec3("light.ambient", 0.3f, 0.3f, 0.3f);
     shader.SetVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
     shader.SetVec3("light.specular", 1.0f, 1.0f, 1.0f);
     shader.SetVec3("light.position", lightPos);
