@@ -22,7 +22,7 @@ endforeach()
 
 add_custom_target(Textures)
 add_dependencies(OpenGL Textures)
-file(GLOB textureFiles ${CMAKE_SOURCE_DIR}/textures/*.jpg)
+file(GLOB textureFiles ${CMAKE_SOURCE_DIR}/textures/*.jpg ${CMAKE_SOURCE_DIR}/textures/*.png)
 
 add_custom_command(TARGET Textures PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/textures)
