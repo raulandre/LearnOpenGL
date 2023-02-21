@@ -128,6 +128,10 @@ int main() {
     shader.SetVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
     shader.SetVec3("light.specular", 1.0f, 1.0f, 1.0f);
     shader.SetVec3("light.position", lightPos);
+    //shader.SetVec3("light.direction", -0.2f, -1.0f, -0.3f);
+    //shader.SetFloat("light.constant",  1.0f);
+    //shader.SetFloat("light.linear",    0.09f);
+    //shader.SetFloat("light.quadratic", 0.032f);
 
     glm::vec3 lightColor = glm::vec3(1.0);
     shader.SetVec3("lightColor", lightColor);
@@ -150,9 +154,16 @@ int main() {
             camera.ProcessKeyboard(LEFT, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             camera.ProcessKeyboard(RIGHT, deltaTime);
+
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.SetSpeed(10.0f);
+        else
+            camera.SetSpeed(2.5f);
     };
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, processMouse);
     glfwSetScrollCallback(window, processScroll);
@@ -190,33 +201,64 @@ int main() {
         processInput(window);
 
         shader.Use();
-        glClearColor(0.2f, 0.4f, 0.7f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
         shader.SetMat4("proj", projection);
         glm::mat4 view = camera.GetViewMatrix();
         shader.SetMat4("view", view);
-        shader.SetMat4("model", model);
         shader.SetVec3("viewPos", camera.Position);
+        shader.SetVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+        shader.SetVec3("light.position",  camera.Position);
+        shader.SetVec3("light.direction", camera.Front);
+        shader.SetFloat("light.cutOff",   glm::cos(glm::radians(12.5f)));
+        shader.SetFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
+        shader.SetVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+        shader.SetVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        shader.SetFloat("light.constant", 1.0f);
+        shader.SetFloat("light.linear", 0.09f);
+        shader.SetFloat("light.quadratic", 0.032f);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textures[0]);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, textures[1]);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glm::vec3 cubePositions[] = {
+                glm::vec3( 0.0f,  0.0f,  0.0f),
+                glm::vec3( 2.0f,  5.0f, -15.0f),
+                glm::vec3(-1.5f, -2.2f, -2.5f),
+                glm::vec3(-3.8f, -2.0f, -12.3f),
+                glm::vec3( 2.4f, -0.4f, -3.5f),
+                glm::vec3(-1.7f,  3.0f, -7.5f),
+                glm::vec3( 1.3f, -2.0f, -2.5f),
+                glm::vec3( 1.5f,  2.0f, -2.5f),
+                glm::vec3( 1.5f,  0.2f, -1.5f),
+                glm::vec3(-1.3f,  1.0f, -1.5f)
+        };
 
-        lightingShader.Use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f));
-        lightingShader.SetMat4("model", model);
-        lightingShader.SetMat4("view", view);
-        lightingShader.SetMat4("proj", projection);
-        glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for(unsigned int i = 0; i < 10; i++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            shader.SetMat4("model", model);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, textures[0]);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, textures[1]);
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+//        auto model = glm::mat4(1.0f);
+//        lightingShader.Use();
+//        model = glm::mat4(1.0f);
+//        model = glm::translate(model, lightPos);
+//        model = glm::scale(model, glm::vec3(0.2f));
+//        lightingShader.SetMat4("model", model);
+//        lightingShader.SetMat4("view", view);
+//        lightingShader.SetMat4("proj", projection);
+//        glBindVertexArray(lightVAO);
+//        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         auto currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
