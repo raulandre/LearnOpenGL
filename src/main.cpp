@@ -15,7 +15,6 @@ Camera camera(glm::vec3(0.0, 0.0, 3.0));
 float lastX = WIDTH / 2.0f;
 float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 void processMouse(GLFWwindow*, double, double);
 void processScroll(GLFWwindow*, double, double);
