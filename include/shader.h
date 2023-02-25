@@ -13,7 +13,6 @@ private:
     unsigned int ID;
 public:
     Shader(const char* vertexPath, const char* fragmentPath);
-    ~Shader();
     void Use();
     void SetBool(const std::string &name, bool value) const;
     void SetInt(const std::string &name, int value) const;
