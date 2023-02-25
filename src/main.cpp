@@ -246,18 +246,6 @@ int main() {
         shader.SetFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
         shader.SetFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
-        //spotLight
-        shader.SetVec3("spotLight.position", camera.Position);
-        shader.SetVec3("spotLight.direction", camera.Front);
-        shader.SetVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-        shader.SetVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-        shader.SetVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-        shader.SetFloat("spotLight.constant", 1.0f);
-        shader.SetFloat("spotLight.linear", 0.09f);
-        shader.SetFloat("spotLight.quadratic", 0.032f);
-        shader.SetFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        shader.SetFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));  
-
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
         shader.SetMat4("proj", projection);
         glm::mat4 view = camera.GetViewMatrix();
