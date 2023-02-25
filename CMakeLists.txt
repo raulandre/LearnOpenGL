@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.24)
 project(OpenGL)
 
 set(CMAKE_CXX_STANDARD 17)
-add_executable(OpenGL src/main.cpp external/glad/src/glad.c src/shader.cpp)
-include_directories(external/glfw/include external/glad/include include/ external/glm)
+add_executable(OpenGL src/main.cpp src/shader.cpp)
+include_directories(external/glfw/include include/ external/glm)
 
 #Copy shaders folder to binary directory
 add_custom_target(Shaders)
@@ -41,4 +41,5 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/glm)
-target_link_libraries(OpenGL glfw glm)
+add_subdirectory(external/glad)
+target_link_libraries(OpenGL glfw glm glad)
