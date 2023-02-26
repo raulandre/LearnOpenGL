@@ -2,12 +2,17 @@ cmake_minimum_required(VERSION 3.24)
 project(OpenGL)
 
 set(CMAKE_CXX_STANDARD 17)
-add_executable(OpenGL src/main.cpp src/shader.cpp)
-include_directories(external/glfw/include include/ external/glm)
+file(GLOB sourceFiles ${CMAKE_SOURCE_DIR}/src/*.cpp)
+add_executable(OpenGL ${sourceFiles})
+include_directories(external/glfw/include external/glm external/assimp/include)
+target_include_directories(OpenGL PUBLIC include/)
+
+add_library(assimp SHARED IMPORTED)
+set_target_properties(assimp PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/external/assimp/bin/libassimp.so)
 
 #Copy shaders folder to binary directory
 add_custom_target(Shaders)
-add_dependencies(OpenGL Shaders)
+add_dependencies(OpenGL Shaders Textures)
 file(GLOB shaderFiles ${CMAKE_SOURCE_DIR}/shaders/*.glsl)
 
 add_custom_command(TARGET Shaders PRE_BUILD
@@ -34,6 +39,8 @@ foreach(textureFile ${textureFiles})
             COMMAND ${CMAKE_COMMAND} -E copy ${textureFile} ${CMAKE_BINARY_DIR}/textures)
 endforeach()
 
+file(COPY ${CMAKE_SOURCE_DIR}/models DESTINATION ${CMAKE_BINARY_DIR})
+
 #Build GLFW
 add_subdirectory(external/glfw)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -42,5 +49,4 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/glm)
 add_subdirectory(external/glad)
-add_subdirectory(external/assimp)
 target_link_libraries(OpenGL glfw glm glad assimp)

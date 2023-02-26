@@ -11,6 +11,3 @@
 	path = external/glad
 	url = https://github.com/Dav1dde/glad.git
 	branch = master
-[submodule "external/assimp"]
-	path = external/assimp
-	url = https://github.com/assimp/assimp.git
