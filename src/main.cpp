@@ -55,8 +55,6 @@ int main() {
 
     Shader shader("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
     shader.Use();
-    shader.SetInt("material.diffuse", 0);
-    shader.SetInt("material.specular", 1);
     shader.SetFloat("material.shininess", 64.0f);
 
     Shader lightingShader("shaders/lightingVertexShader.glsl", "shaders/lightingFragmentShader.glsl");
@@ -79,9 +77,9 @@ int main() {
             camera.ProcessKeyboard(RIGHT, deltaTime);
 
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-            camera.SetSpeed(10.0f);
+            camera.SetSpeed(50.0f);
         else
-            camera.SetSpeed(2.5f);
+            camera.SetSpeed(20.0f);
     };
 
     glEnable(GL_DEPTH_TEST);
@@ -96,9 +94,11 @@ int main() {
         glm::vec3(0.7f, 0.2f, 2.0f),
         glm::vec3(2.3f, -3.3f, -4.0f),
         glm::vec3(-4.0f, 2.0f, -12.0f),
-        glm::vec3(0.0f, 0.0f, -3.0f)};
+        glm::vec3(0.0f, 0.0f, -3.0f)
+    };
 
-    Model backpack("models/backpack/backpack.obj");
+    //Model backpack("models/backpack/backpack.obj");
+    Model sponza("models/sponza/sponza.obj");
 
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -109,7 +109,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // directional light
         shader.SetVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        shader.SetVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        shader.SetVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
         shader.SetVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
         shader.SetVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
         // point light 1
@@ -156,7 +156,7 @@ int main() {
         shader.SetFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
         shader.SetFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 10000.0f);
         shader.SetMat4("proj", projection);
         glm::mat4 view = camera.GetViewMatrix();
         shader.SetMat4("view", view);
@@ -164,9 +164,9 @@ int main() {
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
         shader.SetMat4("model", model);
-        backpack.Draw(shader);
+        sponza.Draw(shader);
 
         auto currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
