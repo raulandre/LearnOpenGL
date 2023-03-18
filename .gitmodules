@@ -11,3 +11,9 @@
 	path = external/glad
 	url = https://github.com/Dav1dde/glad.git
 	branch = master
+[submodule "external/reactphysics3d"]
+	path = external/reactphysics3d
+	url = git@github.com:DanielChappuis/reactphysics3d.git
+[submodule "external/ImGui"]
+	path = external/ImGui
+	url = git@github.com:ocornut/imgui.git
