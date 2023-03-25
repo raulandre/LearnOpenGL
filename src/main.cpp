@@ -8,6 +8,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <iostream>
+#include <unistd.h>
 
 #include "model.h"
 #include "shader.h"
@@ -25,6 +26,7 @@ bool firstMouse = true;
 void processMouse(GLFWwindow*, double, double);
 void processScroll(GLFWwindow*, double, double);
 unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma);
+unsigned int loadCubemap(std::vector<std::string> faces);
 
 int main() {
     if(!glfwInit()) {
@@ -63,7 +65,7 @@ int main() {
     shader.Use();
     shader.SetFloat("material.shininess", 64.0f);
 
-    Shader testShader("shaders/testVertexShader.glsl", "shaders/testFragmentShader.glsl");
+    Shader skyboxShader("shaders/skyboxVertex.glsl", "shaders/skyboxFrag.glsl");
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
@@ -102,11 +104,11 @@ int main() {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImGui::StyleColorsDark();
 
-    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
 
-    stbi_set_flip_vertically_on_load(true);
     glfwSetCursorPosCallback(window, processMouse);
     glfwSetScrollCallback(window, processScroll);
     glfwSetMouseButtonCallback(window, [](GLFWwindow*, int button, int action, int mods){
@@ -163,15 +165,49 @@ int main() {
             -0.5f,  0.5f, -0.5f,  0.0f, 1.0f  // top-left
     };
 
-    float quadVertices[] = {// vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-                            // positions   // texCoords
-                            -1.0f, 1.0f, 0.0f, 1.0f,
-                            -1.0f, -1.0f, 0.0f, 0.0f,
-                            1.0f, -1.0f, 1.0f, 0.0f,
+    float skyboxVertices[] = {
+        // positions
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
 
-                            -1.0f, 1.0f, 0.0f, 1.0f,
-                            1.0f, -1.0f, 1.0f, 0.0f,
-                            1.0f, 1.0f, 1.0f, 1.0f};
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+
+        -1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f};
 
     unsigned int VAO, VBO;
     glGenVertexArrays(1, &VAO);
@@ -184,42 +220,31 @@ int main() {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    testShader.Use();
-    unsigned int quadVAO, quadVBO;
-    glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &quadVBO);
-    glBindVertexArray(quadVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+    unsigned int cubemapVAO, cubemapVBO;
+    glGenVertexArrays(1, &cubemapVAO);
+    glBindVertexArray(cubemapVAO);
+    glGenBuffers(1, &cubemapVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, cubemapVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)(2 * sizeof(float)));
 
-    unsigned int framebuffer;
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-    // create a color attachment texture
-    unsigned int textureColorbuffer;
-    glGenTextures(1, &textureColorbuffer);
-    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
-    // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-    unsigned int rbo;
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIDTH, HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
-    // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+    stbi_set_flip_vertically_on_load(false);
     auto diff = TextureFromFile("container2.png", "textures", true);
     auto spec = TextureFromFile("container2_specular.png", "textures", true);
+
+    std::vector<std::string> faces
+    {
+        "textures/right.jpg",
+        "textures/left.jpg",
+        "textures/top.jpg",
+        "textures/bottom.jpg",
+        "textures/front.jpg",
+        "textures/back.jpg"
+    };
+    auto cubemapTexture = loadCubemap(faces);
+
+    Model backpack("models/backpack/backpack.obj");
 
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -229,15 +254,14 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        glEnable(GL_DEPTH_TEST);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.Use();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 10000.0f);
-        shader.SetMat4("proj", projection);
         glm::mat4 view = camera.GetViewMatrix();
+
+        shader.Use();
+        shader.SetMat4("proj", projection);
         shader.SetMat4("view", view);
         shader.SetVec3("viewPos", camera.Position);
 
@@ -260,34 +284,29 @@ int main() {
         glm::mat4 model = glm::mat4(1.0);
         model = glm::translate(model, glm::vec3(0.0, 0.0, -3.0f));
         shader.SetMat4("model", model);
-        glBindVertexArray(VAO);
+        /*glBindVertexArray(VAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diff);
+        glDrawArrays(GL_TRIANGLES, 0, 36);*/
+        backpack.Draw(shader);
+
+        glDepthMask(GL_FALSE);
+        skyboxShader.Use();
+        skyboxShader.SetInt("skybox", 0);
+        skyboxShader.SetMat4("projection", projection);
+        skyboxShader.SetMat4("view", glm::mat4(glm::mat3(view)));
+        glBindVertexArray(cubemapVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-        // clear all relevant buffers
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        testShader.Use();
-        glBindVertexArray(quadVAO);
-        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
+        glDepthMask(GL_TRUE);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         {
             static float f = 0.0f;
-            ImGui::Begin("Profiling", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text("Position: %.1f, %.1f, %.1f", camera.Position.x, camera.Position.y, camera.Position.z);
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
@@ -381,6 +400,31 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
         std::cout << "failed to load texture: " << path << std::endl;
         stbi_image_free(data);
     }
+
+    return textureID;
+}
+
+unsigned int loadCubemap(std::vector<std::string> faces) {
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for(auto i = 0U; i < faces.size(); i++) {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if(data) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        } else {
+            std::cerr << "Cubemap tex failed to load:" << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     return textureID;
 }
