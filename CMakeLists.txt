@@ -13,13 +13,13 @@ set_target_properties(assimp PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/ex
 #Copy shaders folder to binary directory
 add_custom_target(Shaders)
 add_dependencies(OpenGL Shaders Textures)
-file(GLOB shaderFiles ${CMAKE_SOURCE_DIR}/shaders/*.glsl)
 
 add_custom_command(TARGET Shaders PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/shaders)
 add_custom_command(TARGET Shaders PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/shaders)
 
+file(GLOB shaderFiles ${CMAKE_SOURCE_DIR}/shaders/*.glsl)
 foreach(shaderFile ${shaderFiles})
     add_custom_command(TARGET Shaders POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${shaderFile} ${CMAKE_BINARY_DIR}/shaders)

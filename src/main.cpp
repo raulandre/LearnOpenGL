@@ -10,6 +10,7 @@
 #include <iostream>
 #include <unistd.h>
 
+#include "glm/gtc/type_ptr.hpp"
 #include "model.h"
 #include "shader.h"
 #include "camera.h"
@@ -61,7 +62,7 @@ int main() {
         glViewport(0, 0, width, height);
     });
 
-    Shader shader("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
+    Shader shader("shaders/vertexShader.glsl", "shaders/geometryShader.glsl", "shaders/fragmentShader.glsl");
     shader.Use();
     shader.SetFloat("material.shininess", 64.0f);
 
@@ -120,51 +121,6 @@ int main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    float vertices[] = {
-            // Back face
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
-            0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
-            // Front face
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-            0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-            0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
-            // Left face
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
-            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
-            // Right face
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-            0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
-            0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
-            0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
-            // Bottom face
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
-            0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
-            0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
-            // Top face
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
-            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f  // top-left
-    };
-
     float skyboxVertices[] = {
         // positions
         -1.0f, 1.0f, -1.0f,
@@ -210,16 +166,6 @@ int main() {
         1.0f, -1.0f, 1.0f};
 
     unsigned int VAO, VBO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
     unsigned int cubemapVAO, cubemapVBO;
     glGenVertexArrays(1, &cubemapVAO);
     glBindVertexArray(cubemapVAO);
@@ -229,9 +175,17 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
 
-    stbi_set_flip_vertically_on_load(false);
-    auto diff = TextureFromFile("container2.png", "textures", true);
-    auto spec = TextureFromFile("container2_specular.png", "textures", true);
+    auto index1 = glGetUniformBlockIndex(shader.GetId(), "Matrices");
+    auto index2 = glGetUniformBlockIndex(skyboxShader.GetId(), "Matrices");
+    glUniformBlockBinding(shader.GetId(), index1, 0);
+    glUniformBlockBinding(skyboxShader.GetId(), index2, 0);
+
+    unsigned int UBO;
+    glGenBuffers(1, &UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, UBO, 0, 2 * sizeof(glm::mat4));
 
     std::vector<std::string> faces
     {
@@ -244,7 +198,17 @@ int main() {
     };
     auto cubemapTexture = loadCubemap(faces);
 
+    stbi_set_flip_vertically_on_load(true);
     Model backpack("models/backpack/backpack.obj");
+
+    glm::mat4 projection =
+        glm::perspective(glm::radians(camera.Zoom),
+                         (float)WIDTH / (float)HEIGHT, 0.1f, 10000.0f);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
+                    glm::value_ptr(projection));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -257,44 +221,22 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 10000.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-
         shader.Use();
-        shader.SetMat4("proj", projection);
-        shader.SetMat4("view", view);
         shader.SetVec3("viewPos", camera.Position);
-
-        shader.SetVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        shader.SetVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
-        shader.SetVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-        shader.SetVec3("dirLight.specular", 0.8f, 0.8f, 0.8f);
-
-        shader.SetVec3("spotLight.position", camera.Position);
-        shader.SetVec3("spotLight.direction", camera.Front);
-        shader.SetVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-        shader.SetVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-        shader.SetVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-        shader.SetFloat("spotLight.constant", 1.0f);
-        shader.SetFloat("spotLight.linear", 0.09f);
-        shader.SetFloat("spotLight.quadratic", 0.032f);
-        shader.SetFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        shader.SetFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+        glm::mat4 view = camera.GetViewMatrix();
+        glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         glm::mat4 model = glm::mat4(1.0);
         model = glm::translate(model, glm::vec3(0.0, 0.0, -3.0f));
         shader.SetMat4("model", model);
-        /*glBindVertexArray(VAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diff);
-        glDrawArrays(GL_TRIANGLES, 0, 36);*/
+        shader.SetFloat("time", glfwGetTime());
         backpack.Draw(shader);
 
         glDepthMask(GL_FALSE);
         skyboxShader.Use();
         skyboxShader.SetInt("skybox", 0);
-        skyboxShader.SetMat4("projection", projection);
-        skyboxShader.SetMat4("view", glm::mat4(glm::mat3(view)));
         glBindVertexArray(cubemapVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
