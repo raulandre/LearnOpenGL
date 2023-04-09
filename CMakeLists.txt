@@ -49,5 +49,4 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/glm)
 add_subdirectory(external/glad)
-add_subdirectory(external/reactphysics3d)
-target_link_libraries(OpenGL glfw glm glad assimp reactphysics3d)
+target_link_libraries(OpenGL glfw glm glad assimp)
